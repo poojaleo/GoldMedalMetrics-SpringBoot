@@ -5,6 +5,8 @@ import com.java.goldmedalmetrics.repository.CountryRepository;
 import com.java.goldmedalmetrics.repository.GoldMedalRepository;
 import lombok.AllArgsConstructor;
 import org.apache.commons.text.WordUtils;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -20,26 +22,42 @@ public class GoldMedalController {
     private final CountryRepository countryRepository;
 
     @GetMapping
-    public CountryResponse getCountries(@RequestParam String sort_by, @RequestParam String ascending) {
-        boolean ascendingOrder = ascending.equalsIgnoreCase("y");
-        return new CountryResponse(getCountrySummary(sort_by.toLowerCase(), ascendingOrder));
+    public CountryResponse getCountries(@RequestParam(required = false) String sort_by, @RequestParam(required = false) Boolean ascending) {
+        if(ascending == null) {
+            ascending = false;
+        }
+        if(sort_by == null) {
+            sort_by = "name";
+        }
+        return new CountryResponse(getCountrySummary(sort_by.toLowerCase(), ascending));
     }
 
     @GetMapping("/{country}")
-    public CountryDetailsResponse getCountryDetails(@PathVariable String country) {
+    public ResponseEntity<CountryDetailsResponse> getCountryDetails(@PathVariable String country) {
         String countryName = WordUtils.capitalizeFully(country);
         return getCountryDetailsResponse(countryName);
     }
 
     @GetMapping("/{country}/medals")
-    public CountryMedalsListResponse getCountryMedalList(@PathVariable String country,
-                                                         @RequestParam String sort_by, @RequestParam String ascending) {
+    public ResponseEntity<CountryMedalsListResponse> getCountryMedalList(@PathVariable String country,
+                                                         @RequestParam(required = false) String sort_by, @RequestParam(required = false) Boolean ascending) {
+        if(ascending == null) {
+            ascending = false;
+        }
+        if(sort_by == null) {
+            sort_by = "name";
+        }
         String countryName = WordUtils.capitalizeFully(country);
-        boolean ascendingOrder = ascending.equalsIgnoreCase("y");
-        return getCountryMedalsListResponse(countryName, sort_by.toLowerCase(), ascendingOrder);
+        return getCountryMedalsListResponse(countryName, sort_by.toLowerCase(), ascending);
     }
 
-    private CountryMedalsListResponse getCountryMedalsListResponse(String countryName, String sortBy, boolean ascOrder) {
+    private ResponseEntity<CountryMedalsListResponse> getCountryMedalsListResponse(String countryName, String sortBy, boolean ascOrder) {
+        Optional<Country> countryOptional = countryRepository.getByName(countryName);
+        if(!countryOptional.isPresent()) {
+            //throw new InvalidAttributeValueException(String.format("Country with %s name not found", countryName));
+            return new ResponseEntity<CountryMedalsListResponse>(HttpStatus.BAD_REQUEST);
+        }
+
         List<GoldMedal> medalList;
         switch (sortBy) {
             case "year":
@@ -68,13 +86,15 @@ public class GoldMedalController {
 
         }
 
-        return new CountryMedalsListResponse(medalList);
+        CountryMedalsListResponse response = new CountryMedalsListResponse(medalList);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    private CountryDetailsResponse getCountryDetailsResponse(String countryName) {
+    private ResponseEntity<CountryDetailsResponse> getCountryDetailsResponse(String countryName) {
         Optional<Country> countryOptional = countryRepository.getByName(countryName);
         if(!countryOptional.isPresent()) {
-            return new CountryDetailsResponse(countryName);
+            //throw new InvalidAttributeValueException(String.format("Country with %s name not found", countryName));
+            return new ResponseEntity<CountryDetailsResponse>(HttpStatus.BAD_REQUEST);
         }
 
         Country country = countryOptional.get();
@@ -98,10 +118,12 @@ public class GoldMedalController {
         int numberOfEventsWonByFemaleAthletes = goldMedalRepository.countByCountryAndGender(countryName, "Women");
         int numberOfEventsWonByMaleAthletes = goldMedalRepository.countByCountryAndGender(countryName, "Men");
 
-        return new CountryDetailsResponse(
+        CountryDetailsResponse response = new CountryDetailsResponse(
                 countryName, country.getGdp(), country.getPopulation(), goldMedalCount, numberOfSummerWins,
                 percentageTotalSummerWins, firstYearOfSummerWin, numberOfWinterWins, percentageTotalWinterWins,
                 firstYearOfWinterWin, numberOfEventsWonByFemaleAthletes, numberOfEventsWonByMaleAthletes);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     private List<CountrySummary> getCountrySummary(String sortBy, boolean ascOrder) {

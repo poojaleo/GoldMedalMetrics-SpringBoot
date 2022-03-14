@@ -1,0 +1,190 @@
+openapi: 3.0.0
+
+info:
+  description: "This database will allow users to view a list of countries with their respective population, GDP, and the number of Olympic gold medals won by the country. Users can also sort the list by name, gdp, population and medals won. It also provides deep dive into a specific country by providing metrics such as medals won in summer, medals won in winter, percentage wins for both summer and winter events, events won by female athletes, etc. Users can also view a list of medals won by a specific country sorted by either year, season, city, name or event."
+  version: "0.0.14"
+  title: "Gold Medal Metrics API"
+servers:
+  - url: http://localhost:8080
+
+paths:
+  /countries:
+    get:
+      description: List of all countries with name, gdp, population and total number of Olympic gold medals won
+      parameters:
+        - name: sort_by
+          in: query
+          description: valid values are "name", "gdp", "population", "medals". Incase of null sort_by, the responses will be sorted by name.
+          required: false
+          schema:
+            type: string
+        - name: ascending
+          in: query
+          description: enter true for responses to be sorted in ascending order. By default, responses will be sorted in descending order.
+          required: false
+          schema:
+            type: boolean
+
+      responses:
+        "200":
+          description: Successful Operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/CountrySummary"
+
+        "500":
+          description: Service Error
+
+  /countries/{country}:
+    get:
+      description: Get detailed gold medal metrics for the specified country
+      parameters:
+        - name: country
+          in: path
+          description: country name
+          required: true
+          schema:
+            type: string
+
+      responses:
+        "200":
+          description: Successful Operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/CountryDetails"
+
+        "500":
+          description: Service Error
+
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Country with name not found
+
+
+  /countries/{country}/medals:
+    get:
+      description: Get medal list for the specified country
+      parameters:
+        - name: country
+          in: path
+          description: country name
+          required: true
+          schema:
+            type: string
+        - name: sort_by
+          in: query
+          description: valid values are "year", "season", "city", "name", "event". Incase of null sort_by, the responses will be sorted by name.
+          required: false
+          schema:
+            type: string
+        - name: ascending
+          in: query
+          description: enter true for responses to be sorted in ascending order. By default, responses will be sorted in descending order.
+          required: false
+          schema:
+            type: boolean
+
+      responses:
+        "200":
+          description: Successful Operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/GoldMedal"
+
+        "500":
+          description: Service Error
+
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Country with name not found
+
+
+components:
+  schemas:
+    CountryDetails:
+      type: object
+      properties:
+        name:
+          type: number
+        gdp:
+          type: number
+        population:
+          type: integer
+        numberMedals:
+          type: integer
+        numberSummerWins:
+          type: integer
+        percentageTotalSummerWins:
+          type: number
+        yearFirstSummerWin:
+          type: integer
+        numberWinterWins:
+          type: integer
+        percentageTotalWinterWins:
+          type: number
+        yearFirstWinterWin:
+          type: integer
+        numberEventsWonByFemaleAthletes:
+          type: integer
+        numberEventsWonByMaleAthletes:
+          type: integer
+
+
+    CountrySummary:
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        gdp:
+          type: number
+        population:
+          type: integer
+        medals:
+          type: integer
+
+    GoldMedal:
+      type: object
+      properties:
+        id:
+          type: number
+        year:
+          type: integer
+        city:
+          type: string
+        name:
+          type: string
+        country:
+          type: string
+        gender:
+          type: string
+        sport:
+          type: string
+        discipline:
+          type: string
+        event:
+          type: string

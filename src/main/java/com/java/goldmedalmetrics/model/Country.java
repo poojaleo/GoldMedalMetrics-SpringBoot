@@ -1,5 +1,6 @@
 package com.java.goldmedalmetrics.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,10 +14,11 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 @Entity
+@AllArgsConstructor
 public class Country {
     @Id
     @GeneratedValue
-    private Long id;
+    private Long ID;
 
     private String name;
     private String code;
@@ -37,4 +39,14 @@ public class Country {
         this.population = country.getPopulation();
     }
 
+    @Override
+    public String toString() {
+        return "Country{" +
+                "ID=" + ID +
+                ", name='" + name + '\'' +
+                ", code='" + code + '\'' +
+                ", gdp=" + gdp +
+                ", population=" + population +
+                '}';
+    }
 }
