@@ -33,7 +33,9 @@ localhost:8080/
 
 ### API Documentation
 
-Link to Swagger Documentation
+Please refer the documentation to make curl requests 
+
+[GOLD MEDAL METRICS API DOCUMENTATION](https://poojaleo.github.io/GoldMedalMetrics-SpringBoot/#overview)
 
 ### Data Model
 
